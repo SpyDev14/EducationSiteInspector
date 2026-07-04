@@ -1,6 +1,6 @@
 /**
- * 🏫 Инспектор сайта ОО — полная клиентская логика
- * Версия: 1.2 (улучшенный загрузчик с резервными прокси и увеличенным таймаутом)
+ * 🏫 Инспектор сайта ОО — версия 2.2
+ * Исправлена логика определения статуса: если все подразделы найдены, статус "Соответствует"
  */
 
 // =========================================================================
@@ -98,35 +98,76 @@ const Utils = {
     } catch (_) {
       return url;
     }
+  },
+  extractStringsFromJS(js) {
+    const strings = [];
+    const regex = /(["'])(?:(?=(\\?))\2.)*?\1/g;
+    let match;
+    while ((match = regex.exec(js)) !== null) {
+      strings.push(match[0].slice(1, -1));
+    }
+    return strings;
   }
 };
 
 // =========================================================================
-// 3. ЗАГРУЗЧИК (Fetcher) с расширенными прокси и увеличенным таймаутом
+// 3. ЗАГРУЗЧИК (Fetcher)
 // =========================================================================
 const Fetcher = {
+  DEMO_HTML: `
+    <!DOCTYPE html>
+    <html>
+    <head><title>Школа №1</title></head>
+    <body>
+      <header>
+        <h1>МБОУ СОШ №1</h1>
+        <nav>
+          <a href="/">Главная</a>
+          <a href="/sveden">Сведения об образовательной организации</a>
+          <a href="/vision">Версия для слабовидящих</a>
+        </nav>
+      </header>
+      <main>
+        <section id="sveden">
+          <h2>Сведения об образовательной организации</h2>
+          <ul>
+            <li><a href="/sveden/common">Основные сведения</a></li>
+            <li><a href="/sveden/structure">Структура и органы управления образовательной организацией</a></li>
+            <li><a href="/sveden/documents">Документы</a></li>
+            <li><a href="/sveden/education">Образование</a></li>
+            <li><a href="/sveden/teachers">Руководство. Педагогический (научно-педагогический) состав</a></li>
+            <li><a href="/sveden/material">Материально-техническое обеспечение и оснащенность образовательного процесса</a></li>
+            <li><a href="/sveden/paid">Платные образовательные услуги</a></li>
+            <li><a href="/sveden/finance">Финансово-хозяйственная деятельность</a></li>
+            <li><a href="/sveden/vacancies">Вакантные места для приема (перевода) обучающихся</a></li>
+            <li><a href="/sveden/accessible">Доступная среда</a></li>
+            <li><a href="/sveden/international">Международное сотрудничество</a></li>
+          </ul>
+        </section>
+      </main>
+    </body>
+    </html>
+  `,
+
   async fetchPage(url) {
     if (!Utils.isValidUrl(url)) {
       throw new Error('Некорректный URL. Убедитесь, что адрес начинается с http:// или https://');
     }
 
-    // Список прокси-сервисов с различными форматами запросов
+    if (url === 'demo://school.ru') {
+      console.log('🔧 Используется демо-режим');
+      return this.DEMO_HTML;
+    }
+
     const proxies = [
-      // corsproxy.io — иногда требует правильного URL
       { base: 'https://corsproxy.io/?', type: 'simple' },
-      // allorigins.win (raw) — часто работает
       { base: 'https://api.allorigins.win/raw?url=', type: 'raw' },
-      // allorigins.win (get) — возвращает JSON с полем contents
       { base: 'https://api.allorigins.win/get?url=', type: 'json' },
-      // corsproxy.io с параметром url
-      { base: 'https://corsproxy.io/?url=', type: 'simple' },
-      // thingproxy — часто работает, но может быть медленным
       { base: 'https://thingproxy.freeboard.io/fetch/', type: 'simple' },
-      // cors-anywhere (может требовать заголовок Origin)
       { base: 'https://cors-anywhere.herokuapp.com/', type: 'simple' },
     ];
 
-    const timeoutMs = 60000; // 60 секунд
+    const timeoutMs = 60000;
     let lastError = null;
 
     for (const proxy of proxies) {
@@ -135,7 +176,6 @@ const Fetcher = {
         if (proxy.type === 'raw' || proxy.type === 'json') {
           proxyUrl = proxy.base + encodeURIComponent(url);
         } else {
-          // Для простых прокси добавляем URL напрямую (они сами кодируют)
           proxyUrl = proxy.base + url;
         }
 
@@ -149,10 +189,6 @@ const Fetcher = {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-            'Cache-Control': 'no-cache',
-            // Для cors-anywhere может потребоваться заголовок Origin
-            'Origin': window.location.origin || 'https://example.com',
           }
         });
 
@@ -164,7 +200,6 @@ const Fetcher = {
 
         let html;
         if (proxy.type === 'json') {
-          // allorigins.win/get возвращает JSON с полем contents
           const json = await response.json();
           if (json && json.contents) {
             html = json.contents;
@@ -175,7 +210,6 @@ const Fetcher = {
           html = await response.text();
         }
 
-        // Проверяем, что HTML не слишком короткий (иначе, возможно, ошибка)
         if (html.length < 100) {
           throw new Error('Получен слишком короткий ответ, возможно, прокси вернул ошибку');
         }
@@ -186,17 +220,16 @@ const Fetcher = {
       } catch (error) {
         console.warn(`Ошибка через прокси ${proxy.base}:`, error.message);
         lastError = error;
-        // Небольшая задержка перед следующим прокси
         await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
 
-    throw new Error(`Не удалось загрузить сайт через доступные прокси. Последняя ошибка: ${lastError ? lastError.message : 'неизвестная'}`);
+    throw new Error('CORS_BLOCKED');
   }
 };
 
 // =========================================================================
-// 4. АНАЛИЗАТОР
+// 4. АНАЛИЗАТОР (исправленная логика)
 // =========================================================================
 const Analyzer = {
   analyze(html, url) {
@@ -204,18 +237,20 @@ const Analyzer = {
     const doc = parser.parseFromString(html, 'text/html');
 
     const sectionInfo = this.findSection(doc);
-    const searchRoot = sectionInfo.element || doc.body;
-    const subsections = this.findSubsections(searchRoot, doc);
+    const subsections = this.findSubsectionsCombined(doc, html);
     const vision = this.findVision(doc);
 
     const requiredSubsections = CONFIG.subsections.filter(s => s.required);
     const foundCount = requiredSubsections.filter(s => subsections.find(r => r.id === s.id && r.found)).length;
     const totalRequired = requiredSubsections.length;
 
+    // Новая логика определения статуса
     let overallStatus;
-    if (foundCount === totalRequired && sectionInfo.found) {
+    if (foundCount === totalRequired) {
+      // Все подразделы найдены → считаем раздел найденным и статус "успех"
       overallStatus = 'success';
-    } else if (foundCount === 0 || !sectionInfo.found) {
+      sectionInfo.found = true; // принудительно помечаем раздел как найденный
+    } else if (foundCount === 0) {
       overallStatus = 'danger';
     } else {
       overallStatus = 'warning';
@@ -284,7 +319,14 @@ const Analyzer = {
     return { found: false, element: null };
   },
 
-  findSubsections(root, doc) {
+  findSubsectionsCombined(doc, html) {
+    const menuItems = this.extractMenuItemsFromJS(html);
+    const domItems = this.extractItemsFromDOM(doc);
+
+    const allNames = new Set();
+    menuItems.forEach(name => allNames.add(name));
+    domItems.forEach(name => allNames.add(name));
+
     const results = [];
     const subsections = CONFIG.subsections;
 
@@ -293,81 +335,26 @@ const Analyzer = {
       const searchTerms = [sub.name, ...keywords];
       let found = false;
       let comment = 'Не найден';
-      let element = null;
+      let matchedName = '';
 
-      const searchInRoot = (rootEl) => {
-        if (!rootEl) return false;
-        const textNodes = [];
-        const walker = document.createTreeWalker(
-          rootEl,
-          NodeFilter.SHOW_TEXT,
-          {
-            acceptNode(node) {
-              if (node.textContent.trim() === '') return NodeFilter.FILTER_REJECT;
-              return NodeFilter.FILTER_ACCEPT;
-            }
-          }
-        );
-        let node;
-        while (node = walker.nextNode()) {
-          const parent = node.parentElement;
-          if (parent) {
-            const text = node.textContent;
-            if (Utils.containsAny(text, searchTerms)) {
-              textNodes.push({ node, parent });
-            }
-          }
-        }
-        return textNodes.length > 0;
-      };
-
-      if (root && root !== doc.body) {
-        found = searchInRoot(root);
-        if (found) {
-          comment = 'Найден в разделе';
-        }
-      }
-
-      if (!found) {
-        const foundInDoc = searchInRoot(doc.body);
-        if (foundInDoc) {
+      for (const itemName of allNames) {
+        if (Utils.containsAny(itemName, searchTerms)) {
           found = true;
-          comment = 'Найден на странице (вне основного раздела)';
+          matchedName = itemName;
+          if (itemName.toLowerCase().includes(sub.name.toLowerCase())) {
+            comment = 'Найден (точное совпадение)';
+          } else {
+            comment = 'Найден (частичное совпадение)';
+          }
+          break;
         }
       }
 
       if (!found) {
-        const headings = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
-        for (const h of headings) {
-          const text = Utils.getText(h);
-          if (Utils.containsAny(text, searchTerms)) {
-            found = true;
-            comment = 'Найден в заголовке';
-            break;
-          }
-        }
-      }
-
-      if (!found) {
-        const links = doc.querySelectorAll('a');
-        for (const a of links) {
-          const text = Utils.getText(a);
-          const title = a.getAttribute('title') || '';
-          const combined = text + ' ' + title;
-          if (Utils.containsAny(combined, searchTerms)) {
-            found = true;
-            comment = 'Найден в ссылке';
-            break;
-          }
-        }
-      }
-
-      if (found && comment === 'Не найден') {
-        const exactFound = doc.body.textContent.toLowerCase().includes(sub.name.toLowerCase());
-        if (!exactFound) {
-          comment = 'Найдено частичное совпадение';
-        } else {
-          comment = 'Найден';
+        const bodyText = doc.body ? doc.body.textContent : '';
+        if (Utils.containsAny(bodyText, searchTerms)) {
+          found = true;
+          comment = 'Найден в тексте страницы';
         }
       }
 
@@ -377,11 +364,54 @@ const Analyzer = {
         required: sub.required,
         found: found,
         comment: found ? comment : 'Не найден',
-        element: element,
+        element: null,
       });
     });
 
     return results;
+  },
+
+  extractMenuItemsFromJS(html) {
+    const items = new Set();
+    const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/gi;
+    let match;
+    while ((match = scriptRegex.exec(html)) !== null) {
+      const scriptContent = match[1];
+      const popMenuRegex = /new\s+TPopMenu\s*\(\s*(["'])([^"']+)\1\s*,/g;
+      let m;
+      while ((m = popMenuRegex.exec(scriptContent)) !== null) {
+        const name = m[2].trim();
+        if (name && name.length > 1) {
+          items.add(name);
+        }
+      }
+      const strings = Utils.extractStringsFromJS(scriptContent);
+      strings.forEach(str => {
+        if (str.length > 2 && !str.match(/^[0-9a-f]{8,}/i)) {
+          items.add(str);
+        }
+      });
+    }
+    return Array.from(items);
+  },
+
+  extractItemsFromDOM(doc) {
+    const items = new Set();
+    doc.querySelectorAll('a').forEach(el => {
+      const text = Utils.getText(el);
+      if (text.length > 2) items.add(text);
+      const title = el.getAttribute('title');
+      if (title && title.length > 2) items.add(title);
+    });
+    doc.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(el => {
+      const text = Utils.getText(el);
+      if (text.length > 2) items.add(text);
+    });
+    doc.querySelectorAll('[title]').forEach(el => {
+      const title = el.getAttribute('title');
+      if (title && title.length > 2) items.add(title);
+    });
+    return Array.from(items);
   },
 
   findVision(doc) {
@@ -434,8 +464,15 @@ const Analyzer = {
   generateRecommendations(sectionInfo, subsections, vision) {
     const recs = [];
 
+    // Рекомендация о разделе только если он действительно не найден и не все подразделы есть
     if (!sectionInfo.found) {
-      recs.push('Раздел «Сведения об образовательной организации» не найден. Добавьте его на главной странице или в основном меню.');
+      const required = subsections.filter(s => s.required);
+      const allFound = required.every(s => s.found);
+      if (!allFound) {
+        recs.push('Раздел «Сведения об образовательной организации» не найден. Добавьте его на главной странице или в основном меню.');
+      } else {
+        recs.push('Раздел «Сведения об образовательной организации» не обнаружен как отдельный блок, но все обязательные подразделы присутствуют. Рекомендуется добавить явный заголовок раздела для навигации.');
+      }
     } else {
       recs.push('Раздел «Сведения об образовательной организации» найден.');
     }
@@ -567,6 +604,9 @@ const UI = {
     this.elements = {
       urlInput: document.getElementById('siteUrlInput'),
       checkBtn: document.getElementById('checkBtn'),
+      demoBtn: document.getElementById('demoBtn'),
+      manualHtml: document.getElementById('manualHtml'),
+      manualCheckBtn: document.getElementById('manualCheckBtn'),
       spinner: document.getElementById('spinnerContainer'),
       resultsPanel: document.getElementById('resultsPanel'),
       resultDateBadge: document.getElementById('resultDateBadge'),
@@ -735,6 +775,9 @@ const App = {
       }
     });
 
+    el.demoBtn.addEventListener('click', () => this.runDemo());
+    el.manualCheckBtn.addEventListener('click', () => this.runManual());
+
     el.themeToggle.addEventListener('click', () => this.toggleTheme());
 
     el.clearHistoryBtn.addEventListener('click', () => {
@@ -796,8 +839,49 @@ const App = {
       UI.renderHistory('all');
     } catch (error) {
       console.error('Ошибка проверки:', error);
-      alert(`Ошибка: ${error.message}`);
+      if (error.message === 'CORS_BLOCKED') {
+        alert('Не удалось загрузить сайт из-за политики CORS. Попробуйте:\n' +
+              '1. Запустить приложение через локальный сервер (например, Live Server).\n' +
+              '2. Использовать кнопку "Демо-проверка" для тестирования.\n' +
+              '3. Вставить HTML-код сайта вручную в поле ниже.');
+      } else {
+        alert(`Ошибка: ${error.message}`);
+      }
       UI.hideSpinner();
+    } finally {
+      UI.hideSpinner();
+    }
+  },
+
+  runDemo() {
+    UI.showSpinner();
+    try {
+      const html = Fetcher.DEMO_HTML;
+      const result = Analyzer.analyze(html, 'demo://school.ru');
+      Storage.add(result);
+      UI.renderResults(result);
+      UI.renderHistory('all');
+    } catch (error) {
+      alert('Ошибка демо-режима: ' + error.message);
+    } finally {
+      UI.hideSpinner();
+    }
+  },
+
+  runManual() {
+    const html = UI.elements.manualHtml.value.trim();
+    if (!html) {
+      alert('Пожалуйста, вставьте HTML-код сайта в поле.');
+      return;
+    }
+    UI.showSpinner();
+    try {
+      const result = Analyzer.analyze(html, 'manual://input');
+      Storage.add(result);
+      UI.renderResults(result);
+      UI.renderHistory('all');
+    } catch (error) {
+      alert('Ошибка анализа: ' + error.message);
     } finally {
       UI.hideSpinner();
     }
