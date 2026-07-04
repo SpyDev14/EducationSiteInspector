@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Инспектор сайта ОО — Проверка соответствия Приказу № 831</title>
+
+    <!-- ============================================================
+    СТИЛИ
+    ============================================================ -->
+    <style>
+        /* ---------- RESET & БАЗА ---------- */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --color-primary: #1a3a6b;
+            --color-primary-light: #2a5a9b;
+            --color-primary-dark: #0f2644;
+            --color-accent: #e8822a;
+            --color-accent-light: #f5a85a;
+            --color-success: #2a8e5c;
+            --color-danger: #c0392b;
+            --color-warning: #d4a017;
+            --color-bg: #f0f4f9;
+            --color-surface: #ffffff;
+            --color-text: #1e2a3a;
+            --color-text-secondary: #4a5a6e;
+            --color-border: #d0d8e4;
+            --color-shadow: rgba(26, 58, 107, 0.12);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: 0.25s ease;
+            --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --max-width: 1200px;
+            --header-height: 72px;
+        }
+
+        /* Тёмная тема (переключается через .dark-theme на body) */
+        body.dark-theme {
+            --color-bg: #111927;
+            --color-surface: #1a2438;
+            --color-text: #e8edf5;
+            --color-text-secondary: #a0b0c8;
+            --color-border: #2a3a50;
+            --color-shadow: rgba(0, 0, 0, 0.45);
+            --color-primary: #4a8ad4;
+            --color-primary-light: #6aa8ee;
+            --color-primary-dark: #2a5a8a;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--color-bg);
+            color: var(--color-text);
+            transition: background var(--transition), color var(--transition);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 0 16px 40px;
+        }
+
+        /* ---------- ОБЩИЕ КОМПОНЕНТЫ ---------- */
+        .container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* ---------- ШАПКА ---------- */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            padding: 18px 0 12px;
+            border-bottom: 2px solid var(--color-border);
+            margin-bottom: 28px;
+            transition: border-color var(--transition);
+        }
+
+        .app-header__brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            letter-spacing: -0.3px;
+        }
+
+        .app-header__brand .icon {
+            font-size: 1.7rem;
+            line-height: 1;
+        }
+
+        .app-header__actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* ---------- КНОПКИ ---------- */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 22px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background var(--transition), transform 0.15s, box-shadow var(--transition);
+            background: var(--color-surface);
+            color: var(--color-text);
+            box-shadow: 0 2px 6px var(--color-shadow);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px var(--color-shadow);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn--primary {
+            background: var(--color-primary);
+            color: #fff;
+        }
+        .btn--primary:hover {
+            background: var(--color-primary-light);
+        }
+
+        .btn--accent {
+            background: var(--color-accent);
+            color: #fff;
+        }
+        .btn--accent:hover {
+            background: var(--color-accent-light);
+        }
+
+        .btn--outline {
+            background: transparent;
+            border: 2px solid var(--color-border);
+            box-shadow: none;
+        }
+        .btn--outline:hover {
+            border-color: var(--color-primary);
+            background: var(--color-primary);
+            color: #fff;
+        }
+
+        .btn--success {
+            background: var(--color-success);
+            color: #fff;
+        }
+        .btn--danger {
+            background: var(--color-danger);
+            color: #fff;
+        }
+
+        .btn--sm {
+            padding: 6px 14px;
+            font-size: 0.8rem;
+        }
+
+        .btn--icon {
+            padding: 8px 12px;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+
+        /* ---------- ПОЛЯ ВВОДА ---------- */
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            background: var(--color-surface);
+            padding: 6px 6px 6px 18px;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 2px 8px var(--color-shadow);
+            border: 2px solid transparent;
+            transition: border-color var(--transition), box-shadow var(--transition);
+            flex: 1 1 360px;
+        }
+
+        .input-group:focus-within {
+            border-color: var(--color-primary);
+            box-shadow: 0 4px 16px var(--color-shadow);
+        }
+
+        .input-group__field {
+            flex: 1;
+            min-width: 160px;
+            border: none;
+            background: transparent;
+            padding: 12px 4px;
+            font-size: 1rem;
+            font-family: inherit;
+            color: var(--color-text);
+            outline: none;
+        }
+
+        .input-group__field::placeholder {
+            color: var(--color-text-secondary);
+            opacity: 0.7;
+        }
+
+        .input-group .btn {
+            flex-shrink: 0;
+        }
+
+        /* ---------- КАРТОЧКИ ---------- */
+        .card {
+            background: var(--color-surface);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 20px var(--color-shadow);
+            padding: 24px 28px;
+            margin-bottom: 24px;
+            transition: background var(--transition), box-shadow var(--transition), transform 0.2s;
+        }
+
+        .card--hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px var(--color-shadow);
+        }
+
+        .card__title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--color-primary);
+        }
+
+        .card__title .badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: var(--color-border);
+            padding: 2px 12px;
+            border-radius: 30px;
+            color: var(--color-text-secondary);
+            margin-left: auto;
+        }
+
+        /* ---------- СТАТУСЫ ---------- */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 16px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-badge--success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-badge--danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status-badge--warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-badge--info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        body.dark-theme .status-badge--success {
+            background: #1a4a2a;
+            color: #8fdfb0;
+        }
+        body.dark-theme .status-badge--danger {
+            background: #4a1a1a;
+            color: #f5a0a0;
+        }
+        body.dark-theme .status-badge--warning {
+            background: #4a3a0a;
+            color: #f5d06a;
+        }
+        body.dark-theme .status-badge--info {
+            background: #0a2a3a;
+            color: #7ac8e0;
+        }
+
+        /* ---------- ТАБЛИЦА ПОДРАЗДЕЛОВ ---------- */
+        .subsections-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        .subsections-table th {
+            text-align: left;
+            padding: 12px 8px 12px 0;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            border-bottom: 2px solid var(--color-border);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .subsections-table td {
+            padding: 12px 8px 12px 0;
+            border-bottom: 1px solid var(--color-border);
+            vertical-align: middle;
+        }
+
+        .subsections-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .subsections-table .status-icon {
+            font-size: 1.3rem;
+            line-height: 1;
+        }
+
+        .subsections-table .comment {
+            font-size: 0.85rem;
+            color: var(--color-text-secondary);
+            max-width: 260px;
+        }
+
+        /* ---------- ИСТОРИЯ ---------- */
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            padding: 12px 16px;
+            background: var(--color-bg);
+            border-radius: var(--radius-sm);
+            transition: background var(--transition);
+            border-left: 4px solid var(--color-border);
+        }
+
+        .history-item--success {
+            border-left-color: var(--color-success);
+        }
+        .history-item--danger {
+            border-left-color: var(--color-danger);
+        }
+        .history-item--warning {
+            border-left-color: var(--color-warning);
+        }
+
+        .history-item__url {
+            font-weight: 600;
+            flex: 1;
+            min-width: 120px;
+            word-break: break-all;
+        }
+
+        .history-item__meta {
+            font-size: 0.85rem;
+            color: var(--color-text-secondary);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* ---------- РЕКОМЕНДАЦИИ ---------- */
+        .recommendation-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .recommendation-list li {
+            padding: 8px 12px 8px 32px;
+            background: var(--color-bg);
+            border-radius: var(--radius-sm);
+            position: relative;
+            font-size: 0.95rem;
+        }
+
+        .recommendation-list li::before {
+            content: "💡";
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.1rem;
+        }
+
+        /* ---------- СПИННЕР ---------- */
+        .spinner-container {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 40px 20px;
+            flex-direction: column;
+        }
+
+        .spinner-container.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 5px solid var(--color-border);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spinner-container p {
+            color: var(--color-text-secondary);
+            font-weight: 500;
+        }
+
+        /* ---------- РЕЗУЛЬТАТ (анимация появления) ---------- */
+        .results-panel {
+            animation: fadeSlideUp 0.5s ease;
+        }
+
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ---------- СВОДКА ---------- */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+
+        .summary-item {
+            background: var(--color-bg);
+            border-radius: var(--radius-sm);
+            padding: 16px 20px;
+            text-align: center;
+        }
+
+        .summary-item__value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        .summary-item__label {
+            font-size: 0.8rem;
+            color: var(--color-text-secondary);
+            margin-top: 4px;
+        }
+
+        /* ---------- ФИЛЬТР ИСТОРИИ ---------- */
+        .filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .filter-group .btn {
+            flex: 0 0 auto;
+        }
+
+        .filter-group .btn.active-filter {
+            background: var(--color-primary);
+            color: #fff;
+            border-color: var(--color-primary);
+        }
+
+        /* ---------- АДАПТИВ ---------- */
+        @media (max-width: 768px) {
+            .app-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .app-header__actions {
+                justify-content: stretch;
+            }
+            .app-header__actions .btn {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .input-group {
+                flex: 1 1 100%;
+                padding: 4px 4px 4px 14px;
+            }
+            .input-group__field {
+                min-width: 100px;
+                font-size: 0.95rem;
+                padding: 10px 2px;
+            }
+
+            .card {
+                padding: 18px 16px;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .subsections-table {
+                font-size: 0.85rem;
+            }
+            .subsections-table th,
+            .subsections-table td {
+                padding: 8px 4px 8px 0;
+            }
+            .subsections-table .comment {
+                max-width: 120px;
+                font-size: 0.75rem;
+            }
+
+            .history-item {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 4px;
+            }
+            .history-item__meta {
+                font-size: 0.8rem;
+            }
+
+            .btn {
+                padding: 8px 16px;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 0 10px 30px;
+            }
+            .app-header__brand {
+                font-size: 1.1rem;
+            }
+            .card {
+                padding: 14px 12px;
+            }
+            .summary-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .summary-item {
+                padding: 12px 8px;
+            }
+            .summary-item__value {
+                font-size: 1.4rem;
+            }
+            .subsections-table {
+                font-size: 0.75rem;
+            }
+            .subsections-table th,
+            .subsections-table td {
+                padding: 6px 2px 6px 0;
+            }
+            .subsections-table .status-icon {
+                font-size: 1rem;
+            }
+            .filter-group .btn {
+                font-size: 0.75rem;
+                padding: 4px 10px;
+            }
+            .btn--sm {
+                font-size: 0.7rem;
+                padding: 4px 10px;
+            }
+        }
+
+        /* ---------- УТИЛИТЫ ---------- */
+        .mt-8 {
+            margin-top: 8px;
+        }
+        .mt-16 {
+            margin-top: 16px;
+        }
+        .mt-24 {
+            margin-top: 24px;
+        }
+        .mb-8 {
+            margin-bottom: 8px;
+        }
+        .mb-16 {
+            margin-bottom: 16px;
+        }
+        .flex-center {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .gap-12 {
+            gap: 12px;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .text-muted {
+            color: var(--color-text-secondary);
+        }
+        .fw-600 {
+            font-weight: 600;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .w-full {
+            width: 100%;
+        }
+
+        /* скролл для истории */
+        .history-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .history-list::-webkit-scrollbar-track {
+            background: var(--color-bg);
+            border-radius: 8px;
+        }
+        .history-list::-webkit-scrollbar-thumb {
+            background: var(--color-border);
+            border-radius: 8px;
+        }
+
+        /* ---------- ДЕКОРАТИВНЫЕ ЭЛЕМЕНТЫ ДЛЯ ПРИМЕРА ---------- */
+        .demo-note {
+            font-size: 0.85rem;
+            color: var(--color-text-secondary);
+            background: var(--color-bg);
+            padding: 12px 18px;
+            border-radius: var(--radius-sm);
+            border-left: 4px solid var(--color-accent);
+            margin-top: 12px;
+        }
+
+        .demo-note strong {
+            color: var(--color-text);
+        }
+
+        /* ---------- ФУТЕР ---------- */
+        .app-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid var(--color-border);
+            font-size: 0.85rem;
+            color: var(--color-text-secondary);
+            text-align: center;
+            transition: border-color var(--transition);
+        }
+
+        /* ---------- ЭКСПОРТ ---------- */
+        .export-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        /* ---------- ПУСТОЕ СОСТОЯНИЕ ---------- */
+        .empty-state {
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--color-text-secondary);
+        }
+        .empty-state .icon {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+        .empty-state h3 {
+            color: var(--color-text);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+    ШАПКА
+    ============================================================ -->
+    <header class="app-header container">
+        <div class="app-header__brand">
+            <span class="icon">🏫</span>
+            <span>Инспектор сайта ОО</span>
+        </div>
+        <div class="app-header__actions">
+            <button class="btn btn--outline btn--sm" id="themeToggle" aria-label="Переключить тему">
+                🌙 Тёмная
+            </button>
+            <button class="btn btn--outline btn--sm" id="clearHistoryBtn" aria-label="Очистить историю">
+                🗑️ Очистить
+            </button>
+        </div>
+    </header>
+
+    <!-- ============================================================
+    ОСНОВНОЙ КОНТЕНТ
+    ============================================================ -->
+    <main class="container">
+
+        <!-- --- ПОИСК / ВВОД URL --- -->
+        <section class="card" aria-label="Проверка сайта">
+            <div class="input-group">
+                <input
+                type="url"
+                class="input-group__field"
+                id="siteUrlInput"
+                placeholder="Введите URL сайта, например https://school.ru"
+                value="https://school.ru"
+                autocomplete="url"
+                spellcheck="false"
+                />
+                <button class="btn btn--primary" id="checkBtn">
+                    🔍 Проверить
+                </button>
+            </div>
+            <div class="demo-note">
+                <strong>💡 Подсказка:</strong> Для демонстрации работают тестовые сайты
+                <strong>school.ru</strong>, <strong>college.ru</strong>, <strong>gymnasium.ru</strong>.
+                Реальные сайты могут не загружаться из-за CORS — используйте прокси.
+            </div>
+        </section>
+
+        <!-- --- СПИННЕР ЗАГРУЗКИ --- -->
+        <div class="spinner-container" id="spinnerContainer">
+            <div class="spinner"></div>
+            <p>Анализируем сайт… это может занять несколько секунд</p>
+        </div>
+
+        <!-- --- ПАНЕЛЬ РЕЗУЛЬТАТОВ --- -->
+        <div id="resultsPanel" class="hidden">
+
+            <!-- Сводка -->
+            <section class="card results-panel" aria-label="Сводка результатов">
+                <div class="card__title">
+                    📊 Результаты проверки
+                    <span class="badge" id="resultDateBadge">—</span>
+                </div>
+
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <div class="summary-item__value" id="summaryStatus">—</div>
+                        <div class="summary-item__label">Общий статус</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-item__value" id="summaryFound">0 / 11</div>
+                        <div class="summary-item__label">Найдено подразделов</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-item__value" id="summaryVision">❓</div>
+                        <div class="summary-item__label">Версия для слабовидящих</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-item__value" id="summaryUrl">—</div>
+                        <div class="summary-item__label">Проверенный URL</div>
+                    </div>
+                </div>
+
+                <div class="export-actions">
+                    <button class="btn btn--sm btn--outline" id="exportJsonBtn">📄 Экспорт JSON</button>
+                    <button class="btn btn--sm btn--outline" id="exportTxtBtn">📃 Экспорт TXT</button>
+                </div>
+            </section>
+
+            <!-- Таблица подразделов -->
+            <section class="card results-panel" aria-label="Проверка подразделов">
+                <div class="card__title">
+                    📋 Проверка подразделов
+                    <span class="badge">Приказ № 831</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="subsections-table" id="subsectionsTable">
+                        <thead>
+                            <tr>
+                                <th style="width:32px;">#</th>
+                                <th>Название подраздела</th>
+                                <th style="width:80px;">Статус</th>
+                                <th style="width:40%;">Комментарий</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subsectionsBody">
+                            <!-- заполняется динамически -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Рекомендации -->
+            <section class="card results-panel" aria-label="Рекомендации">
+                <div class="card__title">
+                    💡 Рекомендации
+                    <span class="badge">по устранению</span>
+                </div>
+                <ul class="recommendation-list" id="recommendationList">
+                    <li>Рекомендации появятся после проверки.</li>
+                </ul>
+            </section>
+
+        </div>
+
+        <!-- --- ИСТОРИЯ ПРОВЕРОК --- -->
+        <section class="card" aria-label="История проверок">
+            <div class="card__title">
+                📜 История проверок
+                <span class="badge" id="historyCount">0 записей</span>
+            </div>
+
+            <div class="filter-group" id="historyFilters">
+                <button class="btn btn--sm btn--outline active-filter" data-filter="all">Все</button>
+                <button class="btn btn--sm btn--outline" data-filter="success">✅ Соответствует</button>
+                <button class="btn btn--sm btn--outline" data-filter="warning">⚠️ Частично</button>
+                <button class="btn btn--sm btn--outline" data-filter="danger">❌ Не соответствует</button>
+            </div>
+
+            <div class="history-list" id="historyList">
+                <div class="empty-state">
+                    <span class="icon">📭</span>
+                    <h3>История пуста</h3>
+                    <p>Проведите первую проверку, и она появится здесь.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ============================================================
+    ФУТЕР
+    ============================================================ -->
+    <footer class="app-footer container">
+        <p>
+            Инспектор сайта ОО — проверка соответствия Приказу № 831 (ред. 09.08.2021) &bull;
+            Данные хранятся в <strong>localStorage</strong> &bull;
+            <span id="footerVersion">v1.0</span>
+        </p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
